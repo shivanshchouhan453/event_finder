@@ -44,7 +44,7 @@ class HeaderSectionWidget extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            'Search local events, refresh the feed, and jump straight into the details.',
+            'Search events, refresh the feed, and jump straight into the details.',
             style: theme.textTheme.bodyMedium?.copyWith(
               color: theme.colorScheme.onPrimary.withValues(alpha: 0.9),
               height: 1.4,
