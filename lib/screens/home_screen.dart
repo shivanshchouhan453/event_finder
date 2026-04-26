@@ -1,6 +1,7 @@
 import 'package:event_finder/models/event_model.dart';
 import 'package:event_finder/services/api_services.dart';
-import 'package:event_finder/widgets/event_card_widget.dart';
+import 'package:event_finder/widgets/header_section_widget.dart';
+import 'package:event_finder/widgets/main_section_widget.dart';
 import 'package:flutter/material.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -77,148 +78,6 @@ class _HomeScreenState extends State<HomeScreen> {
     }).toList();
   }
 
-  Widget _buildSearchBar(ThemeData theme) {
-    return TextField(
-      controller: _searchController,
-      onChanged: _onSearchChanged,
-      textInputAction: TextInputAction.search,
-      decoration: InputDecoration(
-        hintText: 'Search by title, category, or location',
-        prefixIcon: const Icon(Icons.search_rounded),
-        suffixIcon: _searchQuery.isEmpty
-            ? null
-            : IconButton(
-                onPressed: () {
-                  _searchController.clear();
-                  _onSearchChanged('');
-                },
-                icon: const Icon(Icons.close_rounded),
-              ),
-        filled: true,
-        fillColor: Colors.white,
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 18,
-          vertical: 16,
-        ),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(18),
-          borderSide: BorderSide.none,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildHeroSection(ThemeData theme) {
-    return Container(
-      padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            theme.colorScheme.primary,
-            theme.colorScheme.primaryContainer,
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(28),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Find your next plan',
-            style: theme.textTheme.headlineSmall?.copyWith(
-              color: theme.colorScheme.onPrimary,
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Search local events, refresh the feed, and jump straight into the details.',
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.colorScheme.onPrimary.withValues(alpha: 0.9),
-              height: 1.4,
-            ),
-          ),
-          const SizedBox(height: 20),
-          _buildSearchBar(theme),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSectionHeader(ThemeData theme, int filteredCount) {
-    return Row(
-      children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                _searchQuery.isEmpty ? 'Upcoming Events' : 'Search Results',
-                style: theme.textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                filteredCount == 1
-                    ? '1 event available'
-                    : '$filteredCount events available',
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
-              ),
-            ],
-          ),
-        ),
-        FilledButton.tonalIcon(
-          onPressed: _refreshEvents,
-          icon: const Icon(Icons.refresh_rounded),
-          label: const Text('Refresh'),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildEmptyState(ThemeData theme) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              Icons.event_busy_rounded,
-              size: 54,
-              color: theme.colorScheme.primary,
-            ),
-            const SizedBox(height: 16),
-            Text(
-              _searchQuery.isEmpty
-                  ? 'No events available right now'
-                  : 'No events match your search',
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w700,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              _searchQuery.isEmpty
-                  ? 'Pull down or tap refresh to fetch the latest events.'
-                  : 'Try a different title, category, or location.',
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   Widget _buildErrorState(Object? error, ThemeData theme) {
     return Center(
       child: Padding(
@@ -271,31 +130,34 @@ class _HomeScreenState extends State<HomeScreen> {
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
-              child: _buildHeroSection(theme),
+              child: HeaderSectionWidget(
+                theme: theme,
+                searchController: _searchController,
+                onSearchChanged: _onSearchChanged,
+                onClearSearch: () {
+                  _searchController.clear();
+                  _onSearchChanged('');
+                },
+                hasQuery: _searchQuery.isNotEmpty,
+              ),
             ),
           ),
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.fromLTRB(20, 4, 20, 8),
-              child: _buildSectionHeader(theme, filteredEvents.length),
-            ),
-          ),
-          if (filteredEvents.isEmpty)
-            SliverFillRemaining(
-              hasScrollBody: false,
-              child: _buildEmptyState(theme),
-            )
-          else
-            SliverPadding(
-              padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
-              sliver: SliverList.separated(
-                itemCount: filteredEvents.length,
-                itemBuilder: (context, index) {
-                  return EventCard(event: filteredEvents[index]);
-                },
-                separatorBuilder: (_, __) => const SizedBox(height: 16),
+              child: EventSectionHeader(
+                theme: theme,
+                searchQuery: _searchQuery,
+                count: filteredEvents.length,
+                onRefresh: _refreshEvents,
               ),
             ),
+          ),
+          MainSectionWidget(
+            theme: theme,
+            events: filteredEvents,
+            searchQuery: _searchQuery,
+          ),
         ],
       ),
     );
